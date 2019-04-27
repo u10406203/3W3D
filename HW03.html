@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#container {
+  width: 60vw;
+  height: 60vw;
+  float: left;
+  background-color: yellow;
+  margin: 10px;
+}
+
+p {
+  margin: 10px;
+  text-align: justify;
+}
+
+
+</style>
+</head>
+
+<body> 
+<h1 style="font-size:2em; text-align:center; margin:15px"> 
+HW3 - Tom Clancy's Rainbow Six® Siege
+</h1>
+
+<hr>
+
+<div id="container">
+<!--canvas id='mycanvas'></canvas-->
+</div>
+  <select id="selectpic" style="font-size:20px;margin-top:2vw">
+    <option value="0">Select</option>
+    <option value="1">ZOFIA</option>
+    <option value="2">ELA</option>
+  </select><br>
+  <p style="font-size:35px;margin-top:1vw"><b> Information: </b></p>
+  <p id="pictureInfo" style="font-size:23px;"> </p>
+<p>
+</p>
+<br>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r78/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<script>
+var camera, scene, renderer;
+var cameraObj;
+var cameraObj1;
+var safety = false;
+var angle = 0;
+var sign = 1;
+var angle1 = 0;
+var sign1 = 1;
+var l = [];	
+var Lightsafety = true;
+var mouse = new THREE.Vector2();
+var raycaster = new THREE.Raycaster();
+var pickables = [];
+var useCamera;
+var cam;	
+init();
+animate();
+
+$("#toggle").click(function() {
+  safety = !safety;
+});
+
+$("#Light").click(function() {
+  Lightsafety = !Lightsafety;
+  if (Lightsafety === true) {
+    for (let i = 0; i < l.length; i++) {
+      l[i].intensity = 1;
+    }
+
+  } else {
+    for (let i = 0; i < l.length; i++) {
+      l[i].intensity = 0;
+    }
+  }
+});
+$("#selectpic").change(function(){
+  var informationText;
+  if( $("#selectpic").val() == 0) {
+	useCamera = camera;		
+	$("#pictureInfo").text("");
+  }
+  if( $("#selectpic").val() == 1) {
+		useCamera =sCam;
+	informationText = $("#pictureInfo").text("ZOFIA，全名Zofia Bosak。1981年出生於波蘭，弗羅茨瓦夫的一個闊綽家庭。她10歲時，波蘭總統遇刺，他父親辭去了GROM司令的職務專任內政部長。作為長女，Zofia繼承父親軍隊衣缽。從幼年起佐菲亞便從父親受到嚴格的軍事訓練，要將她培養成一個果敢決斷的領導者。曾在中學時期遭受到校園霸凌而差點致死的她心中早已對身邊的任何人失去了信任，這一點使她在父親的統治下很快變成了一名合格的戰士。"
++"Zofia 在聽到 Ela 以平民身分通過選拔後立即回到了 GROM。除了試著重新與自己的妹妹聯繫外，三個月後，Zofia 加入了虹彩小隊。");
+    informationText.html(informationText.html().replace(/\n/g,'<br/>'));
+  }
+  if( $("#selectpic").val() == 2) {
+		useCamera = sCam1;
+	informationText = $("#pictureInfo").text("Zofia和Ela是Bosak家的一對姊妹，她們的父親Jan Bosak就是GROM的最高指揮官，從小就接受軍事化的教育。但是在軍事高等學校時，Ela因為一些事情轉到另一所學校，但Ela已經對這方面感到不適，所以私自逃到德國柏林學習美術。兩姊妹的人生道路就此大不相同。"
++"但是好景不常，在巴格達的一次行動完成回歸時，Ela接到了父親自殺的死訊，這是她在離開了波蘭後第一次接到從家裏來的訊息。幾個月後，Ela決定辭職，回到波蘭，在那裏Ela用一般公民的身分通過了GROM的篩選，她試圖透過制服喚起自己對父親的回憶以彌補犯下的過錯。在一次代號為'橙色天空'的行動中，沒有一位平民遭到波及，這次的成功引起了虹彩小隊的注意。後來虹彩計畫的人員便邀請Ela加入他們，而Ela立刻就答應了。");
+	informationText.html(informationText.html().replace(/\n/g,'<br/>'));
+  }
+});
+
+
+function init() {
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+  camera.position.z = 500;
+  camera.position.y = 1800;
+
+
+  var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+  //scene.add(gridXZ);
+
+  let loader = new THREE.TextureLoader();
+  loader.crossOrigin = ''
+  texture = loader.load('https://i.imgur.com/DrvlmNW.jpg');
+  var texMat = new THREE.MeshPhongMaterial({
+    map: texture,
+    side: THREE.DoubleSide
+  });
+
+  var floor = new THREE.Mesh(new THREE.PlaneGeometry(4000, 3000), texMat);
+  floor.rotation.x = Math.PI / 2;
+  scene.add(floor);
+  ///renderer///
+  renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
+  var ww = $('#container').innerWidth();
+  var hh = $('#container').innerHeight();
+  renderer.setSize(ww, hh);
+  renderer.setClearColor(0x555555);
+  $('#container').append(renderer.domElement);
+
+  let controls = new THREE.OrbitControls(camera, renderer.domElement);
+  
+  window.addEventListener('resize', onWindowResize, false);
+  window.addEventListener('mousedown', onDocumentMouseDown, false);
+
+  ///////////////////////////////////////////////////////////
+  let wall = new THREE.Mesh(new THREE.BoxGeometry(4000, 1000, 20), new THREE.MeshPhongMaterial());
+  scene.add(wall);
+  wall.position.set(0, 50, 1500);
+
+  let wall1 = new THREE.Mesh(new THREE.BoxGeometry(4000, 1000, 20), new THREE.MeshPhongMaterial());
+  scene.add(wall1);
+  wall1.position.set(0, 50, -1500);
+
+  let wallle = new THREE.Mesh(new THREE.BoxGeometry(20, 1000, 3000), new THREE.MeshPhongMaterial());
+  scene.add(wallle);
+  wallle.position.set(-2000, 50, 0);
+
+  let wallri = new THREE.Mesh(new THREE.BoxGeometry(20, 1000, 3000), new THREE.MeshPhongMaterial());
+  scene.add(wallri);
+  wallri.position.set(2000, 50, 0);
+
+  let wallle1 = new THREE.Mesh(new THREE.BoxGeometry(20, 1000, 500), new THREE.MeshPhongMaterial());
+  scene.add(wallle1);
+  wallle1.position.set(-500, 50, 1250);
+
+  let wallri1 = new THREE.Mesh(new THREE.BoxGeometry(20, 1000, 500), new THREE.MeshPhongMaterial());
+  scene.add(wallri1);
+  wallri1.position.set(500, 50, 1250);
+
+  let wallle2 = new THREE.Mesh(new THREE.BoxGeometry(1500, 1000, 20), new THREE.MeshPhongMaterial());
+  scene.add(wallle2);
+  wallle2.position.set(-1250, 50, 500);
+
+  let wallle3 = new THREE.Mesh(new THREE.BoxGeometry(1500, 1000, 20), new THREE.MeshPhongMaterial());
+  scene.add(wallle3);
+  wallle3.position.set(-1250, 50, -500);
+
+  let wallri2 = new THREE.Mesh(new THREE.BoxGeometry(1500, 1000, 20), new THREE.MeshPhongMaterial());
+  scene.add(wallri2);
+  wallri2.position.set(1250, 50, 500);
+
+  let wallri3 = new THREE.Mesh(new THREE.BoxGeometry(1500, 1000, 20), new THREE.MeshPhongMaterial());
+  scene.add(wallri3);
+  wallri3.position.set(1250, 50, -500);
+
+  let chair = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 400), new THREE.MeshPhongMaterial());
+  scene.add(chair);
+  chair.position.set(-400, 50, 0);
+
+  let chair2 = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 400), new THREE.MeshPhongMaterial());
+  scene.add(chair2);
+  chair2.position.set(400, 50, 0);
+
+  let chair3 = new THREE.Mesh(new THREE.BoxGeometry(100, 100, 400), new THREE.MeshPhongMaterial());
+  scene.add(chair3);
+  chair3.position.set(0, 50, 0);
+	
+  //let loader = new THREE.TextureLoader();
+  //loader.crossOrigin = "";
+  tex = loader.load ("https://i.imgur.com/y72QCrJ.jpg");
+
+	let painting = new THREE.Mesh (new THREE.PlaneGeometry(960,640), new THREE.MeshBasicMaterial({map: tex}));
+  scene.add (painting);
+  painting.position.x =-1000;
+  painting.position.y =200;
+  painting.position.z =-485;
+  painting.name = 'ELA';
+
+  tex2 = loader.load ("https://i.imgur.com/xGbtq0A.jpg");
+	let painting2 = new THREE.Mesh (new THREE.PlaneGeometry(480,320), new THREE.MeshBasicMaterial({map: tex2}));
+  scene.add (painting2);
+  painting2.rotation.y = Math.PI/2;
+  painting2.position.x = 540;
+  painting2.position.y = 300;
+  painting2.position.z = 1270;
+  painting2.name = 'ZOFIA';
+
+  pickables.push (painting, painting2);
+  //let loader = new THREE.TextureLoader();
+  //loader.crossOrigin = ''
+  //let texture = loader.load("https://i.imgur.com/GASakSo.jpg"); // 570x713
+  //let paint = new THREE.Mesh(new THREE.PlaneGeometry(57.0, 71.3), new THREE.MeshPhongMaterial({
+  //map: texture
+  // }));
+  //scene.add(paint)
+  // paint.position.y = 60;
+  //paint.position.z = 1 // solves z-fighting...
+
+  var directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  scene.add(directionalLight);
+  l[0] = directionalLight;
+  directionalLight.position.set(0, 1, 0);
+  directionalLight.decay = 2;
+
+
+  let lightbox = new THREE.Mesh(new THREE.BoxGeometry(30, 30, 30), new THREE.MeshPhongMaterial());
+  scene.add(lightbox);
+  lightbox.position.set(-1000, 100, 50);
+  spotLight = new THREE.SpotLight(0xffffff);
+  scene.add(spotLight);
+  spotLight.position.set(-1000, 100, 50);
+  spotLight.angle = 0.9;
+  spotLight.penumbra = 0.5;
+  spotLight.distance = 1800
+  spotLight.decay = 0.3
+  captain = new THREE.Mesh(new THREE.SphereGeometry(5, 20, 20), new THREE.MeshBasicMaterial({
+    color: 'red'
+  }));
+  scene.add(captain);
+  captain.material.visible = false;
+  captain.position.set(-1000, 75, 0);
+  spotLight.target = captain;
+  scene.add(spotLight);
+  l[1] = spotLight;
+  spotLightHelper = new THREE.SpotLightHelper(spotLight);
+  //scene.add (spotLightHelper)
+
+  let lightbox2 = new THREE.Mesh(new THREE.BoxGeometry(30, 30, 30), new THREE.MeshPhongMaterial());
+  scene.add(lightbox2);
+  lightbox2.position.set(800, 100, 1250);
+  spotLight = new THREE.SpotLight(0xffffff);
+  scene.add(spotLight);
+  spotLight.position.set(800, 100, 1250);
+  spotLight.angle = 0.7;
+  spotLight.penumbra = 0.4;
+  spotLight.distance = 500;
+  //spotLight.decay = 1;
+  captain = new THREE.Mesh(new THREE.SphereGeometry(5, 20, 20), new THREE.MeshBasicMaterial({
+    color: 'red'
+  }));
+  scene.add(captain);
+  captain.material.visible = false;
+  captain.position.set(520, 75, 1250);
+  spotLight.target = captain;
+  scene.add(spotLight);
+  l[2] = spotLight;
+  spotLightHelper = new THREE.SpotLightHelper(spotLight);
+  /////////////////////////////////////////////////////////////
+  sCam = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+  sCam.position.set(800, 35, 1300);
+  sCam.lookAt(new THREE.Vector3(60, 750, 1300)); //ZOFIA
+  
+  cameraObj = new THREE.Object3D();
+  cameraObj.add(new THREE.AxisHelper(40))
+  cameraBody = new THREE.Mesh(new THREE.BoxGeometry(20, 12, 5), new THREE.MeshNormalMaterial());
+  lens = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 10), new THREE.MeshNormalMaterial());
+  lens.position.z = -5;
+  lens.rotation.x = Math.PI / 2;
+  cameraObj.add(cameraBody, lens);
+
+  cameraCase = new THREE.Object3D();
+  cameraCase.add(cameraObj);
+  cameraCase.position.set(-1000, 100, 50);
+  scene.add(cameraCase);
+
+  // manual aiming, from (-50,40,50) to (0,0,0)
+  cameraCase.rotation.y = -Math.PI / 4;
+  cameraCase.rotation.x = -Math.PI / 8;
+  cameraCase.rotation.order = 'YXZ'
+  /////////////////////////////////////////////////////
+  sCam1 = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+	sCam1.position.set(-1200, 350, 150);
+  sCam1.lookAt(new THREE.Vector3(600, -500, -9000));
+
+  
+  cameraObj1 = new THREE.Object3D();
+  cameraObj1.add(new THREE.AxisHelper(40))
+  cameraBody1 = new THREE.Mesh(new THREE.BoxGeometry(20, 12, 5), new THREE.MeshNormalMaterial());
+  lens1 = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 10), new THREE.MeshNormalMaterial());
+  lens1.position.z = -5;
+  lens1.rotation.x = Math.PI / 2;
+  cameraObj1.add(cameraBody1, lens1);
+
+  cameraCase1 = new THREE.Object3D();
+  cameraCase1.add(cameraObj1);
+  cameraCase1.position.set(2000, 1000, -1400);
+  scene.add(cameraCase1);
+
+  cameraCase1.rotation.y = -Math.PI / 4;
+  cameraCase1.rotation.x = -Math.PI / 8;
+  cameraCase1.rotation.order = 'YXZ'
+  
+  useCamera = camera;	
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+function onDocumentMouseDown(event) {
+	
+  //event.preventDefault();
+  
+  // many unsuccessful tries ...
+/*
+  mouse.x = ((event.clientX - event.target.offsetLeft) / $('#container').innerWidth()) * 2 - 1;
+  mouse.y = -((event.clientY - event.target.offsetTop) / $('#container').innerHeight()) * 2 + 1;
+*/
+  
+  var viewportPos =$('#container').get(0).getBoundingClientRect(); 
+	mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+  mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+
+	raycaster.setFromCamera(mouse, camera);
+  var intersects = raycaster.intersectObjects (pickables);
+  if (intersects.length > 0) {
+    //cyl.position.copy(intersects[0].point);
+    alert (intersects[0].object.name )
+  }
+}
+
+
+function animate() {
+  cam = useCamera;	
+  renderer.render(scene, cam);
+  requestAnimationFrame(animate);
+}
+
+
+</script>
+</body>
+
+</html>

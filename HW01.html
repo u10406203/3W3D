@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+
+
+</style>
+</head>
+
+<body> 
+<div>
+  <!--
+  <div id="light" style="position:absolute;top:10vw;left:30vw;  
+background:pink;width:20px;height:20px;  
+border-radius:15px;z-index:1"></div>
+-->
+  <img src="https://i.imgur.com/omX5Drl.png" style="position:absolute;top:0vw;left:0vw;width:70vw;z-index:-1">
+  <button id="switch" style="width:110px;high:34px;front-size:20px;"> Light off </button>
+</div>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<script>
+class Light {
+
+  constructor() {
+    // create/append div dynamically
+    // https://stackoverflow.com/questions/14004117/create-div-and-append-div-dynamically
+    this.h = 80;
+    this.s = 80;
+    this.element = document.createElement('div');
+    //this = iDiv;
+    this.element.id = 'light';
+    // set element style attribute
+    //https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
+    this.element.style.cssText = "position:absolute;width:20px;height:20px;border-radius:15px;z-index:1";
+    this.element.style.top = '4vw';
+    this.element.style.left = '34vw';
+    // CSS color property: https://www.w3schools.com/cssref/pr_text_color.asp
+    // hsl: https://www.w3schools.com/colors/colors_hsl.asp
+    this.element.style.background = "hsl(89, 40%, 50%)";
+    document.getElementsByTagName('body')[0].appendChild(this.element);
+  }
+
+  changeColor() {
+    // https://stackoverflow.com/questions/45147661/javascript-recursion-within-a-class/45147713
+    var self = this;
+    var hue = Math.random() * this.h;
+    self.element.style.background = "hsl(" + hue + ", " + this.s + "%, 50%)";
+    setTimeout(function() {
+      self.changeColor()
+    }, 1000);
+    // setTimeout ( self.changeColor , 1000);  // why this is not working ...
+  }
+
+}
+
+////////////////////////////////
+var sw = true;
+
+init();
+
+$('#switch').click(function() {
+  sw= !sw
+  if (sw === true) {
+    $('#switch').text('Light off');
+    light.h = 80;
+    light.s = 80;
+    light2.h = 80;
+    light2.s = 80;
+
+  } else {
+    $('#switch').text('Light on');
+    light.h = 100;
+    light.s = 0;
+    light2.h = 100;
+    light2.s = 0;
+
+  }
+});
+
+var light;
+var light2;
+
+function init() {
+  light = new Light();
+  light2 = new Light();
+  light2.element.style.top = '10vw';
+  light.changeColor();
+  light2.changeColor();
+}
+</script>
+</body>
+
+</html>
