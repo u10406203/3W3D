@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+
+
+</style>
+</head>
+
+<body> 
+<h1 style="text-align:center"> HW4 </h1>
+<hr>
+
+<div id="container" style="float:left; margin:3px; width:50vw; height:50vw"></div>
+<div style="float:left; margin-left: 10px; width:32vw;">
+  Radius: 
+  <input type=range min=1 max=10 step=1 value=5 id='ptlightIntensity'>
+  <br>
+  Sound:
+  <audio id="sound">
+    <source = src="https://raw.githubusercontent.com/u10406203/3W3D/master/push_bell_b.mp3" type="audio/mp3">
+</audio>
+  <input type="checkbox" name="soundcheck" value="false" style="width:25px; height:25px">
+  <br>
+  <p id="col" style="font-size:20px;"> </p>
+  <br><br><br><br><br><br><br><br><br><br><br><br><br>
+  <button id="toggle" style="width:400px; height:50px">Start/Pause</button>
+</div>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+
+<script>
+$('#toggle').click ( function() {
+	motion = !motion;
+  console.log (motion)
+});
+
+$('#ptlightIntensity').change(function() {
+  radius = $(this).val();
+  scene.remove(circle);
+  circle = new THREE.Mesh (new THREE.CircleGeometry (radius,20), new THREE.MeshBasicMaterial({color:0x1582F2}));
+  scene.add(circle);
+})
+
+var camera, scene, renderer, circle, radius, rectangle;
+var pos, vel;
+var motion = true;
+var pickables = [];
+var mouse = new THREE.Vector2();
+var raycaster = new THREE.Raycaster();
+init();
+animate();
+
+function init() {
+
+  var ww = $("#container").innerWidth();
+  var hh = $("#container").innerHeight();
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(ww, hh);
+  renderer.setClearColor(0xFFFFFF);
+  $("#container").append(renderer.domElement);
+  
+  ////////////////////////////////////////////////
+
+  scene = new THREE.Scene();
+  camera = new THREE.OrthographicCamera (-50,50,50,-50,1, 1000);
+  camera.position.z = 500;
+
+  rectangle = new THREE.Mesh(new THREE.BoxGeometry(40, 20, 0), new THREE.MeshBasicMaterial({color:0xD00F3A}));
+  scene.add(rectangle);
+  
+  radius = 5;
+  circle = new THREE.Mesh (new THREE.CircleGeometry (radius,20), new THREE.MeshBasicMaterial({color:0x1582F2}));
+  scene.add(circle);
+  
+  let geometry = new THREE.Geometry();
+  geometry.vertices.push(
+    new THREE.Vector3(-48, -48, 0),
+    new THREE.Vector3(48, -48, 0),
+    new THREE.Vector3(48, 48, 0),
+    new THREE.Vector3(-48, 48, 0),
+    new THREE.Vector3(-48, -48, 0));
+
+  let border = new THREE.Line(geometry, new THREE.LineBasicMaterial({
+    color: 0x0000ff
+  }));
+  scene.add(border);
+
+  pos = new THREE.Vector3();
+  vel = new THREE.Vector3(5,4,0);
+  window.addEventListener('resize', onWindowResize, false);
+  window.addEventListener('mousedown', onDocumentMouseDown, false);
+  
+  pickables.push(rectangle);
+}
+
+function onWindowResize() {
+  var ww = $("#container").innerWidth();
+  var hh = $("#container").innerHeight();
+
+  camera.aspect = ww / hh;
+  camera.updateProjectionMatrix();
+  renderer.setSize(ww, hh);
+}
+
+function onDocumentMouseDown(event) {
+  var viewportPos =$('#container').get(0).getBoundingClientRect(); 
+  mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+  mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+  
+  raycaster.setFromCamera(mouse, camera);
+  var intersects = raycaster.intersectObjects (pickables);
+  
+  //if(48 * mouse.x < 28 && 48 * mouse.x > -28 && 48 * mouse.y < 38 && 48 * mouse.y > -38) {
+  if(48 * mouse.x < 48 && 48 * mouse.x > -48 && 48 * mouse.y < 48 && 48 * mouse.y > -48) {
+    rectangle.position.x = 48 * mouse.x;
+    rectangle.position.y = 48 * mouse.y;
+  }
+}
+
+function animate() {
+	var iscollision;
+	$.ajaxSetup({async:false}); //同步
+	$.get( "http://127.0.0.1:1337/api?maxx="+(rectangle.position.x+20)+"&minx="+(rectangle.position.x-20)+"&maxy="+(rectangle.position.y+10)+"&miny="+(rectangle.position.y-10)+"&cx="+(circle.position.x)+"&cy="+(circle.position.y)+"&rad="+(circle.radius), function( data ) {
+		if(data && data.output){
+			var coords = data.output.split (" ");
+			//disc.position.set (coords[0]);
+			console.log (coords[0]);
+			if(coords[0] == 1)
+			{
+				circle.material.color = new THREE.Color(0x924BC5);
+				iscollision = $("#col").text("Collision!");
+				iscollision.html(iscollision.html().replace(/\n/g,'<br/>'));
+			}
+			else
+			{
+				circle.material.color = new THREE.Color(0x1582F2);
+				iscollision = $("#col").text("");
+				iscollision.html(iscollision.html().replace(/\n/g,'<br/>'));
+			}
+		}
+	});
+	dt = motion ? 0.1 : 0;
+	pos.add (vel.clone().multiplyScalar(dt));
+	
+	if (Math.abs(pos.x) > 48-radius) {
+  	vel.x *= -1;  	
+	sound.play();
+  }
+	if (Math.abs(pos.y) > 48-radius) {
+  	vel.y *= -1;
+	sound.play();
+  }
+  circle.position.copy (pos);
+  
+  requestAnimationFrame(animate);
+  render();
+}
+
+function render() {
+  renderer.render(scene, camera);
+}
+</script>
+</body>
+
+</html>
