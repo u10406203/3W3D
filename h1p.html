@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+  <head>
+    <title>HW05</title>
+	
+	<center><font size="4"><h1 id='title'>
+	</h1></font></center>
+	<hr>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 220, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #8A8A8A; }
+      #messages { margin-bottom: 40px }
+    </style>
+  </head>
+  <body>
+    <center><p id="online"></p></center>	
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" placeholder="Send Message..."/><button>Send</button>
+    </form>
+    <!--script src="https://cdn.socket.io/socket.io-1.2.0.js"></script-->
+	<!--script src="node_modules/socket.io-client/dist/socket.io.js"></script-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+	<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+	
+	<script>
+      $(function () {
+        var socket = io();
+		let myName = document.location.search.match(/\?name=(.+)/)[1];
+		$('#title').text ('Hi, ' + myName);
+        $('form').submit(function(){
+		  if($('#m').val() != "") {
+            socket.emit('chat message', $('#m').val(), myName);
+            $('#m').val('');
+		  }
+		  else {
+		    alert("Why dont u type");
+		  }
+          return false;
+        });
+		socket.emit('login', myName);
+		socket.on('login', function(name, onlineUsers){
+		  $('#online').text("ChatRoom users: " + onlineUsers);
+		    
+		  if(myName == name)
+		    $('#messages').append($('<li>').text("Successfully Connected!"));
+		  else {
+            $('#messages').append($('<li>').text("A new friend: " + name + " has connected!"));
+		  }
+		  window.scrollTo(0, document.body.scrollHeight);
+        });
+		socket.on('disconnect', function (onlineUsers) {
+		  $('#online').text("ChatRoom users: " + onlineUsers);
+		  $('#messages').append($('<li>').text("Someone left"));
+		});
+        socket.on('chat message', function(msg, name){
+
+          $('#messages').append($('<li>').text(name + ": " + msg));
+          window.scrollTo(0, document.body.scrollHeight);
+        });
+      });
+    </script>
+  </body>
+</html>
